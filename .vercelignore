@@ -1,0 +1,4 @@
+# Служебные файлы прототипа — на самом сайте не нужны
+presence-prototype/deploy.bat
+presence-prototype/DEPLOY-README.txt
+.git

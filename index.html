@@ -1,0 +1,1279 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Presence Layer — Two lives. One you.</title>
+<!-- шрифты подключены локально через @font-face ниже (Enigma + Ki) -->
+<style>
+/* ============================================================
+   PRESENCE LAYER · LANDING (v2)
+   Black canvas · real prototype screens (iframes) on a 3D ring.
+   ============================================================ */
+/* ENIGMA — заголовки (заголовки и цифры рендерятся Bold) */
+@font-face{ font-family:'Enigma'; src:url('fonts/EnigmaRegular.ttf') format('truetype'); font-weight:1 350; font-style:normal; font-display:swap; }
+@font-face{ font-family:'Enigma'; src:url('fonts/EnigmaBold.ttf') format('truetype'); font-weight:351 1000; font-style:normal; font-display:swap; }
+/* KI — основной текст */
+@font-face{ font-family:'Ki'; src:url('fonts/Ki-Light.ttf')     format('truetype'); font-weight:300; font-style:normal; font-display:swap; }
+@font-face{ font-family:'Ki'; src:url('fonts/Ki-Regular.ttf')   format('truetype'); font-weight:400; font-style:normal; font-display:swap; }
+@font-face{ font-family:'Ki'; src:url('fonts/Ki-Medium.ttf')    format('truetype'); font-weight:500; font-style:normal; font-display:swap; }
+@font-face{ font-family:'Ki'; src:url('fonts/Ki-Bold.ttf')      format('truetype'); font-weight:700; font-style:normal; font-display:swap; }
+@font-face{ font-family:'Ki'; src:url('fonts/Ki-ExtraBold.ttf') format('truetype'); font-weight:800; font-style:normal; font-display:swap; }
+
+:root{
+  --accent:#6EF4D8;
+  --purple:#AE70FE;
+  --a20:rgba(110,244,216,.20); --a30:rgba(110,244,216,.30); --a55:rgba(110,244,216,.55);
+  --v30:rgba(174,112,254,.30); --v55:rgba(174,112,254,.55);
+  --w15:rgba(255,255,255,.15); --w20:rgba(255,255,255,.20);
+  --w40:rgba(255,255,255,.40); --w60:rgba(255,255,255,.60);
+  --font-display:'Enigma','Ki',sans-serif;
+  --font-mono:'Ki', sans-serif;
+  --ease:cubic-bezier(.4,0,.2,1);
+  --ease-out:cubic-bezier(.16,1,.3,1);
+
+  /* card geometry — native phone size, NO scaling → crisp 1:1 */
+  --card-w:360px;
+  --card-h:780px;
+  --ring-r:620px;   /* carousel radius */
+}
+
+*,*::before,*::after{box-sizing:border-box; margin:0; padding:0; -webkit-font-smoothing:antialiased;}
+html,body{color:#fff; font-family:var(--font-mono); -webkit-tap-highlight-color:transparent; -webkit-text-size-adjust:100%; text-size-adjust:100%;}
+html{scroll-behavior:smooth; background:#14131B;}
+/* whole-landing background: base #14131B, darkening to black on the left at the
+   bottom and warming into #2E2447 on the right */
+body{
+  overflow-x:hidden;
+  background-color:#14131B;
+  background-image:
+    radial-gradient(150% 38% at 100% 100%, #2E2447 0%, rgba(46,36,71,0) 60%),
+    radial-gradient(120% 32% at 0% 100%, #050409 0%, rgba(5,4,9,0) 55%);
+  background-repeat:no-repeat;
+}
+a{color:inherit; text-decoration:none;}
+img,video,svg,iframe{display:block; max-width:100%;}
+iframe{border:0;}
+button{font-family:inherit; cursor:pointer; border:0; background:none; color:inherit;}
+
+/* ─── nav ─── */
+.nav{
+  position:fixed; top:0; left:0; right:0; z-index:80;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:24px 36px;
+  font-family:var(--font-mono); font-size:10px; letter-spacing:.28em; text-transform:uppercase;
+  pointer-events:none;
+  mix-blend-mode:difference;
+}
+.nav > *{pointer-events:auto;}
+.nav-brand{display:flex; align-items:center; gap:10px; color:#fff; opacity:0; transition:opacity .4s var(--ease); pointer-events:none;}
+body.scrolled .nav-brand{opacity:1; pointer-events:auto;}
+.nav-brand-dot{width:8px; height:8px; border-radius:50%; background:var(--accent); box-shadow:0 0 10px var(--accent);}
+.nav-cta{
+  padding:10px 18px; border:1px solid rgba(255,255,255,.4); border-radius:999px;
+  color:#fff; transition:all .3s var(--ease);
+}
+.nav-cta:hover{background:#fff; color:#000;}
+
+/* progress bar */
+.prog{position:fixed; top:0; left:0; right:0; height:2px; z-index:90; pointer-events:none;}
+.prog-fill{height:100%; width:0%; background:linear-gradient(90deg, var(--accent), var(--purple)); box-shadow:0 0 10px var(--accent);}
+
+/* ═════════════ 1 · HERO (video only) ═════════════ */
+.hero{position:relative; width:100%; height:100vh; height:100dvh; background:#000; overflow:hidden;}
+.hero-video{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transition:filter .55s var(--ease-out), transform .8s var(--ease-out);}
+
+/* ── "вжух" auto-scroll flourish ── */
+body.whooshing .hero-video{filter:blur(9px) brightness(.55) saturate(1.2); transform:scale(1.14);}
+body.whooshing .hero-scroll{opacity:0;}
+body.whooshing .identity-stage{animation:whoosh-in .9s var(--ease-out);}
+@keyframes whoosh-in{
+  0%   {transform:scale(calc(var(--stage-scale,1) * .82)) translateY(70px); filter:blur(7px);}
+  55%  {filter:blur(0);}
+  100% {transform:scale(var(--stage-scale,1)) translateY(0); filter:blur(0);}
+}
+.hero-edge{
+  position:absolute; left:0; right:0; bottom:-1px; height:140px;
+  background:linear-gradient(180deg, transparent, #000);
+  pointer-events:none; z-index:2;
+}
+.hero-scroll{
+  position:absolute; bottom:40px; right:40px;
+  z-index:3;
+  display:flex; flex-direction:column; align-items:center; gap:14px;
+  font-family:var(--font-mono); font-size:9px; letter-spacing:.36em; text-transform:uppercase;
+  color:rgba(255,255,255,.7);
+  animation:fade-pulse 2.4s ease-in-out infinite;
+}
+.hero-scroll span{writing-mode:vertical-rl; text-orientation:mixed;}
+.hero-scroll-line{width:1px; height:48px; background:linear-gradient(180deg, transparent, rgba(255,255,255,.6)); position:relative; overflow:hidden;}
+.hero-scroll-line::after{
+  content:""; position:absolute; left:0; right:0; top:-20px; height:20px;
+  background:linear-gradient(180deg, transparent, var(--accent));
+  animation:scroll-trail 1.8s ease-in-out infinite;
+}
+@keyframes scroll-trail{0%{top:-20px;}100%{top:100%;}}
+@keyframes fade-pulse{0%,100%{opacity:.5;}50%{opacity:1;}}
+
+/* ═════════════ 2 · IDENTITY CAROUSEL (real prototype iframes) ═════════════ */
+.identity{
+  position:relative;
+  min-height:100vh; min-height:100dvh;
+  /* solid black up top, melting down into the page's base gradient */
+  background:linear-gradient(180deg, #000 0%, #000 30%, rgba(0,0,0,0) 100%);
+  padding:60px 30px 40px;
+  perspective:2600px;
+  overflow:hidden;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+}
+
+.identity-stage{
+  position:relative; z-index:1;
+  width:100%; max-width:1280px;
+  /* the stage box stays 780px tall in flow even when scaled — reclaim the
+     leftover space with negative top/bottom margins so the nav sits snugly
+     under the *visually* scaled carousel */
+  margin:calc((var(--stage-scale, 1) - 1) * 390px) auto;
+  height:var(--card-h);
+  transform-style:preserve-3d;
+  transform:scale(var(--stage-scale, 1));
+  transition:transform .4s var(--ease);
+}
+.identity-ring{
+  position:absolute; inset:0;
+  transform-style:preserve-3d;
+  transition:transform 1.4s var(--ease-out);
+}
+
+/* ── one identity card = a double-sided panel on the orbit ──
+   FRONT  = real prototype screen (iframe)
+   BACK   = holographic "scanned from behind" plate (seen when the card
+            rounds the far side of the circle) */
+.id-phone{
+  position:absolute; left:50%; top:50%;
+  width:var(--card-w); height:var(--card-h);
+  margin-left:calc(var(--card-w) / -2);
+  margin-top:calc(var(--card-h) / -2);
+  transform-style:preserve-3d;          /* no overflow clip → faces live in 3D */
+  transition:transform 1.2s var(--ease-out), filter .45s var(--ease);
+  animation:floaty 7s ease-in-out infinite;
+}
+.id-phone[data-i="1"]{animation-duration:8.2s; animation-delay:-1.1s;}
+.id-phone[data-i="2"]{animation-duration:6.4s; animation-delay:-2.4s;}
+.id-phone[data-i="3"]{animation-duration:9.1s; animation-delay:-3.0s;}
+.id-phone[data-i="4"]{animation-duration:7.6s; animation-delay:-0.6s;}
+@keyframes floaty{
+  0%   {translate:0 -10px 0; rotate:1 .5 0  2.4deg;}
+  50%  {translate:0  10px 0; rotate:1 .5 0 -2.4deg;}
+  100% {translate:0 -10px 0; rotate:1 .5 0  2.4deg;}
+}
+
+/* shared face geometry */
+.id-face{
+  position:absolute; inset:0;
+  border-radius:50px; overflow:hidden;
+  border:1px solid rgba(255,255,255,.06);
+  background:#000;
+  -webkit-backface-visibility:hidden; backface-visibility:hidden;
+  box-shadow:0 50px 110px rgba(0,0,0,.85);
+}
+
+/* FRONT face — the live prototype */
+.id-front .id-frame{
+  width:360px; height:780px;
+  pointer-events:none;            /* enabled only on the active card */
+}
+/* frosted holographic veil over INACTIVE fronts */
+.id-front .holo{
+  position:absolute; inset:0; z-index:3; pointer-events:none;
+  opacity:1; transition:opacity .45s var(--ease);
+  background:
+    linear-gradient(115deg, rgba(110,244,216,.12) 0%, transparent 35%, rgba(174,112,254,.14) 75%),
+    repeating-linear-gradient(0deg, rgba(110,244,216,.05) 0px, rgba(110,244,216,.05) 1px, transparent 2px, transparent 4px);
+  mix-blend-mode:screen;
+}
+
+/* BACK face — what you see when the card faces away on the far side */
+.id-back{
+  transform:rotateY(180deg);
+  background:
+    radial-gradient(70% 50% at 50% 35%, rgba(110,244,216,.10), transparent 65%),
+    linear-gradient(165deg, rgba(33,32,40,.7), #07060c 60%, rgba(174,112,254,.10));
+}
+.id-back::before{   /* circuit grid */
+  content:""; position:absolute; inset:0;
+  background:
+    linear-gradient(rgba(110,244,216,.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(110,244,216,.06) 1px, transparent 1px);
+  background-size:26px 26px;
+  mask-image:radial-gradient(75% 70% at 50% 40%, #000, transparent 85%);
+  -webkit-mask-image:radial-gradient(75% 70% at 50% 40%, #000, transparent 85%);
+}
+.id-back::after{   /* travelling scan line — "we're scanning it from behind" */
+  content:""; position:absolute; left:0; right:0; height:2px;
+  background:linear-gradient(90deg, transparent, var(--accent), transparent);
+  box-shadow:0 0 14px var(--accent);
+  opacity:.7;
+  animation:back-scan 3.2s linear infinite;
+}
+@keyframes back-scan{0%{top:6%;}100%{top:94%;}}
+
+/* ACTIVE card — front face crisp, glowing, interactive */
+.id-phone.active{ animation:none; translate:none; rotate:none; filter:none; }
+.id-phone.active .id-front{
+  border-color:var(--a55);
+  box-shadow:0 60px 130px rgba(0,0,0,.85), 0 0 0 1px var(--a55) inset, 0 0 90px rgba(110,244,216,.35);
+}
+.id-phone.active.violet .id-front{
+  border-color:var(--v55);
+  box-shadow:0 60px 130px rgba(0,0,0,.85), 0 0 0 1px var(--v55) inset, 0 0 90px rgba(174,112,254,.4);
+}
+.id-phone.active .holo{opacity:0;}
+.id-phone.active .id-front .id-frame{pointer-events:auto;}
+.id-phone:not(.active) .id-front{pointer-events:none;}   /* only the front screen is interactive; side cards never intercept its clicks */
+
+/* ── feature popup beside the selected screen ──
+   anchored to 50% + half the (scaled) card width, so it tracks --stage-scale */
+.feat-pop{
+  position:fixed; z-index:60;
+  width:250px; padding:18px 20px;
+  /* plate: solid #212028, no glow */
+  background:#212028;
+  border-radius:16px;
+  box-shadow:0 24px 60px rgba(0,0,0,.6);
+  pointer-events:none; opacity:0;
+}
+.feat-pop.show{opacity:1;}
+
+/* side hover zones — switch screens by hovering right / left of the selected one (no buttons) */
+.id-side{
+  position:fixed; top:50%; transform:translateY(-50%);
+  height:60vh; width:22vw; max-width:300px;
+  z-index:55; cursor:pointer;
+  pointer-events:none;
+}
+.id-side.show{ pointer-events:auto; }
+.id-side.left{ left:0; }
+.id-side.right{ right:0; }
+@media (max-width:980px){ .id-side{ display:none; } }
+.feat-pop::before{   /* arrow pointing toward the screen — solid, no border */
+  content:''; position:absolute; top:50%; left:-6px;
+  width:12px; height:12px; transform:translateY(-50%) rotate(45deg);
+  background:#212028;
+}
+/* violet variant now only re-colours the eyebrow (plates have no border) */
+.feat-pop .eyebrow{
+  display:flex; align-items:center; gap:7px;
+  font-family:var(--font-mono); font-size:9px; letter-spacing:.26em; text-transform:uppercase;
+  color:var(--accent); margin-bottom:9px;
+}
+.feat-pop.violet .eyebrow{color:var(--purple);}
+.feat-pop .eyebrow .dot{width:5px; height:5px; border-radius:50%; background:currentColor; box-shadow:0 0 8px currentColor;}
+.feat-pop .ttl{
+  font-family:var(--font-display); text-transform:uppercase;
+  font-size:18px; line-height:1.12; letter-spacing:.01em; color:#fff; margin-bottom:8px;
+}
+.feat-pop .txt{
+  font-family:var(--font-mono); font-size:11px; line-height:1.55; color:var(--w60);
+}
+@media (max-width:980px){
+  .feat-pop{
+    left:50% !important; right:auto !important;
+    top:auto !important; bottom:16px !important;
+    transform:translateX(-50%) !important;
+    width:min(92vw,420px); text-align:center;
+  }
+  .feat-pop::before{display:none;}
+  .feat-pop .eyebrow{justify-content:center;}
+}
+
+/* ── "touch it" caption (non-interactive label, no border) ── */
+.id-explore{
+  position:relative;
+  margin-top:30px;
+  display:inline-flex; align-items:center; gap:11px;
+  padding:10px 0;
+  background:none; border:0;
+  color:var(--accent);
+  font-family:var(--font-mono); font-size:10px; letter-spacing:.22em; text-transform:uppercase;
+  white-space:nowrap; z-index:6;
+  opacity:0; transform:translateY(10px);
+  transition:opacity .4s var(--ease), transform .4s var(--ease);
+  pointer-events:none;
+}
+.id-explore.show{opacity:1; transform:translateY(0);}
+.id-explore .ic{width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center; font-size:13px;}
+
+/* identity nav */
+.identity-nav{
+  margin-top:24px;
+  display:flex; align-items:center; justify-content:center; gap:18px;
+  font-family:var(--font-mono); font-size:10px; letter-spacing:.22em; text-transform:uppercase;
+  color:var(--w60);
+  position:relative; z-index:7;
+}
+.id-arrow{
+  width:48px; height:48px; border:1px solid var(--w20); border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  color:#fff; transition:all .25s var(--ease); font-size:14px;
+}
+.id-arrow:hover{border-color:var(--accent); color:var(--accent); box-shadow:0 0 22px rgba(110,244,216,.3); transform:scale(1.05);}
+.id-counter{font-family:var(--font-display); font-size:20px; letter-spacing:.05em; color:#fff; min-width:88px; text-align:center;}
+.id-counter .a{color:var(--accent);}
+
+/* ════════ TWO-COLUMN IDENTITY: prototype (left) · feature text (right) ════════ */
+:root{ --proto-scale:.48; }
+.id-split{
+  width:100%; max-width:1180px; margin:0 auto;
+  display:grid; grid-template-columns:1fr 1fr; align-items:center; gap:48px;
+}
+.id-left{ display:flex; justify-content:center; align-items:center; min-width:0; overflow:hidden; }
+.id-right{ min-width:0; }
+/* layout box reserves the SCALED footprint of the carousel (≤3/4 of the half) */
+.id-proto-box{
+  position:relative;
+  width:calc(var(--card-w) * var(--proto-scale));
+  height:calc(var(--card-h) * var(--proto-scale));
+}
+/* OUTER uniform scaler — sits OUTSIDE the perspective so the whole projected
+   carousel shrinks linearly (transform:scale ignores Z, so scaling has to happen
+   AFTER the 3D projection, never inside it) */
+.id-proto-frame{
+  position:absolute; top:0; left:0;
+  width:var(--card-w); height:var(--card-h);
+  transform:scale(var(--proto-scale)); transform-origin:top left;
+}
+.id-persp{ position:absolute; inset:0; perspective:2400px; }
+.id-left .identity-stage{
+  position:absolute; inset:0; margin:0;
+  width:var(--card-w); height:var(--card-h);
+  transform:none;
+}
+
+.id-feature{ max-width:540px; }
+.id-eyebrow{
+  display:inline-flex; align-items:center; gap:9px;
+  font-family:var(--font-mono); font-size:11px; letter-spacing:.22em; text-transform:uppercase;
+  color:var(--w50); margin-bottom:22px;
+}
+.id-eyebrow .dot{ width:6px; height:6px; border-radius:50%; background:var(--accent); box-shadow:0 0 10px var(--accent); }
+.id-eyebrow .a{ color:var(--accent); }
+.id-feat-ttl{
+  font-family:var(--font-display); font-weight:400;
+  font-size:clamp(30px, 3.4vw, 48px); line-height:1.05; letter-spacing:.01em; color:#fff;
+  min-height:2.1em;            /* reserve 2 lines → text below never jumps when the title length changes */
+  transition:opacity .35s var(--ease);
+}
+.id-feat-txt{
+  font-family:var(--font-mono); font-size:clamp(15px, 1.5vw, 21px); line-height:1.55;
+  color:var(--w70); margin-top:24px; max-width:480px;
+  min-height:4.65em;           /* reserve 3 lines → the nav below stays put across screens */
+  transition:opacity .35s var(--ease);
+}
+.id-right .identity-nav{ justify-content:flex-start; margin-top:36px; }
+.id-right .id-explore{ display:inline-flex; margin-top:16px; }
+/* the floating popup + side-hover zones are replaced by the right-hand panel */
+.feat-pop{ display:none !important; }
+.id-side{ display:none !important; }
+
+@media (min-width:1025px){
+  @media (max-height:860px){ :root{ --proto-scale:.41; } }
+  @media (max-height:740px){ :root{ --proto-scale:.36; } }
+}
+@media (max-width:980px){
+  .id-split{ grid-template-columns:1fr; gap:14px; justify-items:center; }
+  .id-right{ text-align:center; }
+  .id-feature{ display:flex; flex-direction:column; align-items:center; }
+  .id-eyebrow{ justify-content:center; }
+  .id-right .identity-nav{ justify-content:center; }
+  .id-feat-txt{ margin-left:auto; margin-right:auto; }
+  :root{ --proto-scale:min(.55, calc((100vw - 40px) / 360)); }
+}
+
+/* ═════════════ PHOTOS / VIDEOS FLYING AROUND THE CTA BUTTON ═════════════ */
+.cta-media{
+  position:absolute; inset:0; z-index:1;
+  pointer-events:none; transform-style:preserve-3d;
+  transition:transform .3s ease-out;
+}
+.cm-item{
+  position:absolute; width:var(--w,300px);  /* real render size = hovered size → no upscaling, stays crisp */
+  pointer-events:auto; cursor:pointer; transform-style:preserve-3d; will-change:transform;
+  --sc:.5; --z:0px; --rx:0deg; --ry:0deg; --rot:0deg;
+  /* turned in 3D space by default; idle = scaled DOWN (downscale is always sharp) */
+  transform:translateZ(var(--z)) rotateX(var(--rx)) rotateY(var(--ry)) rotate(var(--rot)) scale(var(--sc));
+  transition:transform .75s cubic-bezier(.22,1.15,.36,1), opacity .7s var(--ease-out);
+  opacity:0;
+}
+.cta.in .cm-item{opacity:1;}
+.cm-inner{
+  position:relative; border-radius:16px; overflow:hidden;
+  border:0;   /* обводка фото убрана */
+  box-shadow:0 28px 64px rgba(0,0,0,.55);
+  filter:blur(var(--blur,2px)) brightness(.82); opacity:.84;
+  transition:filter .45s var(--ease), opacity .45s var(--ease), box-shadow .45s var(--ease), border-color .45s var(--ease);
+  animation:cm-bob 8s ease-in-out infinite; transform-style:preserve-3d;
+}
+.cm-media{display:block; width:100%; height:100%; object-fit:cover; aspect-ratio:var(--ar,1.6); background:#0c0b12;}
+/* selling caption — single tooltip placed to the LEFT/RIGHT of the active tile (by JS) */
+.cm-tip{
+  position:fixed; z-index:60;
+  width:max-content; max-width:240px;
+  padding:11px 15px;
+  font-family:var(--font-mono); font-weight:500; font-size:12.5px; line-height:1.4;
+  color:#fff;
+  /* plate: solid #212028, no glow */
+  background:#212028;
+  border-radius:13px;
+  box-shadow:0 18px 44px rgba(0,0,0,.55);
+  opacity:0; pointer-events:none;
+}
+.cm-tip.show{ opacity:1; }
+.cm-tip.show.to-left{ animation:cmTipL .4s var(--ease-out); }
+.cm-tip.show.to-right{ animation:cmTipR .4s var(--ease-out); }
+@keyframes cmTipL{ from{ opacity:0; transform:translateX(16px); } to{ opacity:1; transform:translateX(0); } }
+@keyframes cmTipR{ from{ opacity:0; transform:translateX(-16px); } to{ opacity:1; transform:translateX(0); } }
+@media (max-width:980px){ .cm-tip{ max-width:min(78vw,300px); } }
+/* HOVER (or auto-demo) → turn FRONTAL (rx/ry/rot → 0), native 1:1 size (crisp), forward, on top */
+.cm-item:hover, .cm-item.is-auto{--sc:1; --z:50px; --rx:0deg; --ry:0deg; --rot:0deg; z-index:30;}
+.cm-item:hover .cm-inner, .cm-item.is-auto .cm-inner{
+  filter:blur(0) brightness(1.03); opacity:1;
+  box-shadow:0 50px 120px rgba(0,0,0,.72), 0 0 64px rgba(110,244,216,.3);
+  border-color:var(--a30);
+  animation:none;   /* hold still while active so the caption keeps its gap */
+}
+/* richer 3D idle motion: sway + yaw wobble + tilt */
+@keyframes cm-bob{
+  0%,100%{transform:translate3d(-7px,-15px,0) rotateY(-4deg) rotateZ(-1.6deg);}
+  50%    {transform:translate3d(7px,15px,0)   rotateY(4deg)  rotateZ(1.6deg);}
+}
+/* scatter around the centre block — varied depth, 3D angle, size & blur */
+.cm-1{left:calc(50% - 560px); top:2%; --w:300px; --sc:.5;  --z:-40px;  --ry:26deg;  --rx:-6deg; --rot:-5deg; --blur:2.4px;}
+.cm-2{left:calc(50% - 600px); top:39%; --w:340px; --sc:.5;  --z:25px;   --ry:18deg;  --rx:4deg;  --rot:3deg;  --blur:1.2px;}
+.cm-3{left:calc(50% - 520px); top:66%; --w:262px; --sc:.52; --z:-120px; --ry:30deg;  --rx:-4deg; --rot:-4deg; --blur:3px;}
+.cm-4{left:calc(50% + 262px); top:1%; --w:332px; --sc:.5;  --z:5px;    --ry:-24deg; --rx:5deg;  --rot:5deg;  --blur:1.6px;}
+.cm-5{left:calc(50% + 322px); top:41%; --w:286px; --sc:.52; --z:-70px;  --ry:-30deg; --rx:-4deg; --rot:-5deg; --blur:2.6px;}
+.cm-6{left:calc(50% + 250px); top:68%; --w:356px; --sc:.46; --z:35px;   --ry:-16deg; --rx:6deg;  --rot:4deg;  --blur:1.4px;}
+.cm-7{left:calc(50% - 366px); top:84%; --w:250px; --sc:.46; --z:-205px; --ry:22deg;  --rx:-5deg; --rot:6deg;  --blur:3.6px;}
+.cm-1 .cm-inner{animation-duration:8.6s;}
+.cm-2 .cm-inner{animation-duration:7.1s; animation-delay:-1.6s;}
+.cm-3 .cm-inner{animation-duration:9.4s; animation-delay:-3.2s;}
+.cm-4 .cm-inner{animation-duration:6.7s; animation-delay:-0.8s;}
+.cm-5 .cm-inner{animation-duration:8.0s; animation-delay:-2.4s;}
+.cm-6 .cm-inner{animation-duration:7.6s; animation-delay:-4.0s;}
+.cm-7 .cm-inner{animation-duration:9.0s; animation-delay:-1.1s;}
+@media (prefers-reduced-motion: reduce){ .cm-inner{animation:none;} }
+/* narrower desktops: pin the side clusters to the edges so they stay on-screen */
+@media (max-width:1180px){
+  .cm-1,.cm-2,.cm-3{left:10px;}
+  .cm-4,.cm-5,.cm-6{left:auto; right:10px;}
+  .cm-7{left:5%;}
+}
+@media (max-width:1024px){ .cta-media{display:none;} }
+
+/* ═════════════ 3 · DOWNLOAD CTA · holographic fly-in ═════════════ */
+.cta{
+  position:relative; min-height:100vh; min-height:100dvh; background:transparent;
+  padding:120px 30px 100px;
+  display:flex; align-items:center; justify-content:center;
+  overflow:hidden; perspective:1400px;
+}
+.cta-inner{position:relative; z-index:2; display:flex; flex-direction:column; align-items:center; text-align:center; transform-style:preserve-3d; pointer-events:none;}
+/* re-enable only the genuinely interactive element so the transparent
+   centre box doesn't steal hover from the flying cards underneath */
+.cta-inner .hc-btn{pointer-events:auto;}
+.cta-eyebrow{
+  font-family:var(--font-mono); font-size:10px; letter-spacing:.36em; text-transform:uppercase;
+  color:var(--accent); margin-bottom:22px;
+  opacity:0; transform:translateY(20px);
+  transition:opacity .7s var(--ease-out), transform .7s var(--ease-out);
+}
+.cta-title{
+  font-family:var(--font-display);
+  font-size:clamp(26px, 4vw, 56px); line-height:1.05; letter-spacing:.03em; font-weight:400;
+  margin:0 0 46px;
+}
+.cta-title .ln{
+  display:block; opacity:0;
+  transform:translate(-28px, -190px) rotate(-7deg);
+  transform-origin:30% 50%;
+  will-change:transform, opacity;
+}
+.cta-title .a{color:var(--accent);}
+.cta-title .sk{color:transparent; -webkit-text-stroke:1.2px var(--accent);}
+/* fallback: if text-stroke isn't supported, show solid accent (not invisible) */
+@supports not (-webkit-text-stroke: 1px #000){ .cta-title .sk{color:var(--accent);} }
+
+.holo-card{
+  position:relative; width:340px;
+  transform-style:preserve-3d;
+  transform:translateZ(-700px) rotateY(-540deg) scale(.62);   /* pre-spin pose */
+  opacity:0;
+  will-change:transform, opacity;
+}
+.holo-card-face{
+  position:relative; border-radius:28px; padding:30px 26px 26px;
+  background:transparent;
+  display:flex; flex-direction:column; align-items:center; gap:18px;
+}
+/* gradient — appears (scales) from the centre after the card settles; no rotation; extra outer ring */
+.holo-card-face::before{
+  content:''; position:absolute; left:50%; top:42%;
+  width:400px; height:400px; margin:-200px 0 0 -200px;
+  display:none;   /* glow moved out of the spinning card → see .hc-glow */
+}
+.hc-wrap{ position:relative; transform-style:preserve-3d; }
+/* pulsing glow — lives OUTSIDE the spinning card, so it never rotates */
+.hc-rings{
+  display:none;   /* круговой градиент на CTA убран */
+  position:absolute; left:50%; top:42%;
+  width:400px; height:400px; margin:-200px 0 0 -200px;
+  z-index:0; pointer-events:none; opacity:0;
+  background:radial-gradient(circle closest-side,
+    rgba(110,244,216,0)   0%,
+    rgba(110,244,216,.06) 9%,  rgba(110,244,216,0) 15%,
+    rgba(110,244,216,.11) 27%, rgba(110,244,216,0) 34%,
+    rgba(110,244,216,.17) 49%, rgba(110,244,216,0) 57%,
+    rgba(174,112,254,.15) 72%, rgba(174,112,254,0) 80%,
+    rgba(110,244,216,.13) 87%, rgba(110,244,216,0) 100%);
+}
+/* the glow pulse appears FIRST (scales from the centre); the card spins in on top afterwards; the glow never rotates (it's outside the card) */
+.cta.in .hc-rings{
+  animation:hc-appear .8s var(--ease-out) .2s both, hc-pulse 5s ease-in-out 1.1s infinite;
+}
+@keyframes hc-appear{ from{ transform:scale(0); opacity:0; } to{ transform:scale(1); opacity:1; } }
+@keyframes hc-pulse{
+  0%,100%{ transform:scale(.92); opacity:.55; }
+  50%    { transform:scale(1.08); opacity:1; }
+}
+.hc-grid{
+  position:absolute; inset:0; pointer-events:none; opacity:.5;
+  background:linear-gradient(rgba(110,244,216,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(110,244,216,.05) 1px, transparent 1px);
+  background-size:22px 22px;
+  mask-image:radial-gradient(70% 70% at 50% 40%, #000, transparent 80%);
+  -webkit-mask-image:radial-gradient(70% 70% at 50% 40%, #000, transparent 80%);
+}
+.hc-top{
+  position:relative; z-index:2; width:100%; display:flex; align-items:center; justify-content:center; gap:8px;
+  font-family:var(--font-mono); font-size:9px; letter-spacing:.22em; text-transform:uppercase; color:var(--w60);
+}
+.hc-dot{width:6px; height:6px; border-radius:50%; background:var(--accent); box-shadow:0 0 8px var(--accent);}
+.hc-orb{position:relative; width:96px; height:96px; transform-style:preserve-3d; animation:sph 13s linear infinite; margin:6px 0;}
+.hc-orb i{position:absolute; inset:0; border-radius:50%; border:1px solid var(--accent); box-shadow:0 0 8px rgba(110,244,216,.4), inset 0 0 6px rgba(110,244,216,.2);}
+.hc-orb i:nth-child(1){transform:rotateY(0);}
+.hc-orb i:nth-child(2){transform:rotateY(36deg); opacity:.7;}
+.hc-orb i:nth-child(3){transform:rotateY(72deg); opacity:.55;}
+.hc-orb i:nth-child(4){transform:rotateY(108deg); opacity:.4;}
+.hc-orb i:nth-child(5){transform:rotateX(75deg); opacity:.5;}
+@keyframes sph{0%{transform:rotateY(0) rotateX(8deg);}100%{transform:rotateY(360deg) rotateX(8deg);}}
+.hc-label{
+  position:relative; z-index:2;
+  font-family:var(--font-display); font-size:20px; letter-spacing:.04em; color:#fff;
+  line-height:1.15; text-align:center;
+}
+.hc-btn{
+  position:relative; z-index:2; width:100%;
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  padding:16px 22px; border-radius:12px;
+  background:var(--accent); color:#0a0910;
+  font-family:var(--font-mono); font-size:12px; letter-spacing:.16em; text-transform:uppercase; font-weight:500;
+  transition:all .3s var(--ease);
+}
+.hc-btn:hover{transform:translateY(-2px); box-shadow:0 0 16px rgba(110,244,216,.4), 0 0 32px rgba(110,244,216,.14);}
+.holo-card-shadow{
+  position:absolute; left:10%; right:10%; bottom:-40px; height:60px;
+  background:radial-gradient(50% 100% at 50% 0%, rgba(110,244,216,.3), transparent 70%);
+  filter:blur(16px); opacity:.6;
+}
+
+/* reveal state */
+.cta.in .cta-eyebrow{opacity:1; transform:translateY(0);}
+/* title lines DROP in: vertical fall tipping right, then a springy bounce */
+.cta.in .cta-title .ln{animation:title-drop 1.25s forwards;}
+.cta.in .cta-title .ln:nth-child(1){animation-delay:.15s;}
+.cta.in .cta-title .ln:nth-child(2){animation-delay:.42s;}
+@keyframes title-drop{
+  0%   {opacity:0; transform:translate(-28px,-190px) rotate(-7deg); animation-timing-function:cubic-bezier(.6,.04,.98,.34);} /* gravity accel */
+  10%  {opacity:1;}
+  48%  {transform:translate(8px,0)    rotate(5deg);  animation-timing-function:cubic-bezier(.2,.85,.3,1);} /* impact + tip right */
+  64%  {transform:translate(3px,-26px) rotate(-3deg); animation-timing-function:cubic-bezier(.6,.04,.98,.34);} /* bounce up */
+  80%  {transform:translate(4px,0)    rotate(2deg);  animation-timing-function:cubic-bezier(.2,.85,.3,1);}
+  90%  {transform:translate(1px,-9px)  rotate(-1deg);}
+  100% {opacity:1; transform:translate(0,0) rotate(0);}
+}
+@media (prefers-reduced-motion: reduce){
+  .cta-title .ln{opacity:1; transform:none;}
+  .cta.in .cta-title .ln{animation:none;}
+  .holo-card{opacity:1; transform:none;}
+  .cta.in .holo-card{animation:none;}
+}
+.cta.in .holo-card{
+  animation:hc-spin-in 1.35s cubic-bezier(.16,1,.3,1) 1.1s both, hc-float 6s ease-in-out 2.5s infinite;
+}
+/* block spins in around its own (Y) axis, flying forward out of 3D space */
+@keyframes hc-spin-in{
+  0%   {opacity:0; transform:translateZ(-700px) rotateY(-540deg) scale(.62);}
+  55%  {opacity:1;}
+  100% {opacity:1; transform:translateZ(0) rotateY(0deg) scale(1);}
+}
+@keyframes hc-float{0%,100%{translate:0 -8px 0; rotate:1 1 0 2deg;}50%{translate:0 8px 0; rotate:1 1 0 -2deg;}}
+
+/* ═════════════ MODAL · dive-in fullscreen prototype ═════════════ */
+.modal{
+  position:fixed; inset:0; z-index:100;
+  background:rgba(0,0,0,.9);
+  backdrop-filter:blur(22px); -webkit-backdrop-filter:blur(22px);
+  display:none; align-items:center; justify-content:center;
+  opacity:0; transition:opacity .4s var(--ease);
+}
+.modal.open{display:flex; opacity:1;}
+.modal-shell{
+  position:relative; width:360px; height:780px; max-width:96vw;
+  border-radius:48px; background:#000;
+  border:1px solid var(--w15);
+  box-shadow:0 80px 200px rgba(0,0,0,.9), 0 0 100px rgba(110,244,216,.25);
+  overflow:hidden; transform:scale(.85);
+  transition:transform .55s var(--ease-out);
+}
+.modal.open .modal-shell{transform:scale(1);}
+.modal-shell iframe{width:100%; height:100%;}
+.modal-close{
+  position:fixed; top:30px; right:30px; z-index:5;
+  width:48px; height:48px; border-radius:50%;
+  background:rgba(255,255,255,.08); border:1px solid var(--w20);
+  color:#fff; display:flex; align-items:center; justify-content:center; font-size:18px;
+  transition:all .3s var(--ease);
+}
+.modal-close:hover{background:#fff; color:#000; transform:rotate(90deg);}
+
+/* ═════════════ RESPONSIVE ═════════════ */
+
+/* ── desktop: fit the native 780px phone to shorter viewports ── */
+@media (min-width: 1025px){
+  @media (max-height: 920px){ :root{ --stage-scale:.86; } }
+  @media (max-height: 820px){ :root{ --stage-scale:.76; } }
+  @media (max-height: 720px){ :root{ --stage-scale:.66; } }
+}
+
+/* ── TABLET (≤1024px) ── */
+@media (max-width: 1024px){
+  :root{
+    --ring-r:520px;
+    --stage-scale:min(.92, calc((100vw - 40px) / 360), calc((100vh - 170px) / 780));
+  }
+  .nav{padding:20px 26px;}
+  .identity{padding:96px 0 36px;}
+  .cta{padding:110px 26px 90px;}
+  .cta-title{font-size:clamp(30px, 5.2vw, 52px);}
+}
+
+/* ── MOBILE (≤760px) ── */
+@media (max-width: 760px){
+  :root{
+    --ring-r:430px;
+    --stage-scale:min(1, calc((100vw - 14px) / 360), calc((100vh - 188px) / 780));
+  }
+  .nav{padding:14px 16px; font-size:9px; letter-spacing:.22em;}
+  .nav-cta{padding:8px 13px;}
+  .identity{padding:80px 0 26px; perspective:1500px;}
+  .id-face{border-radius:42px;}
+  .id-explore{margin-top:20px;}
+  .identity-nav{margin-top:34px; gap:14px;}
+  .id-arrow{width:44px; height:44px;}
+  .id-counter{font-size:18px; min-width:78px;}
+  .hero-scroll{right:18px; bottom:22px; gap:10px; font-size:8px;}
+  .hero-scroll-line{height:38px;}
+  /* CTA */
+  .cta{padding:84px 18px 76px; min-height:90vh; min-height:90dvh;}
+  .cta-title{font-size:clamp(28px, 8vw, 46px); margin-bottom:34px;}
+  .holo-card{width:min(330px, 88vw);}
+  .holo-card-face{padding:26px 22px 22px;}
+  /* trim the heaviest 3D effects so it stays smooth on phones */
+  .id-back::after{display:none;}
+}
+
+/* ── SMALL PHONES (≤400px) ── */
+@media (max-width: 400px){
+  :root{ --stage-scale:min(1, calc((100vw - 8px) / 360), calc((100vh - 178px) / 780)); }
+  .holo-card{width:92vw;}
+  .cta-title{font-size:clamp(26px, 9vw, 40px);}
+}
+
+/* ── MODAL · fit to any viewport ── */
+@media (max-width: 1024px){
+  .modal-shell{
+    width:360px; height:780px; transform-origin:center;
+    transform:scale(min(.85, calc((100vw - 16px) / 360), calc((100vh - 28px) / 780)));
+  }
+  .modal.open .modal-shell{
+    transform:scale(min(1, calc((100vw - 16px) / 360), calc((100vh - 28px) / 780)));
+  }
+  .modal-close{top:16px; right:16px; width:42px; height:42px; font-size:16px;}
+}
+@media (max-height: 840px) and (min-width: 1025px){
+  .modal-shell{transform:scale(.82);}
+  .modal.open .modal-shell{transform:scale(calc((100vh - 40px) / 780));}
+}
+</style>
+</head>
+<body>
+
+<div class="prog"><div class="prog-fill" id="progFill"></div></div>
+
+<nav class="nav">
+  <a class="nav-brand" href="#hero">
+    <span class="nav-brand-dot"></span><span>Presence Layer</span>
+  </a>
+  <a class="nav-cta" href="#identity">Explore</a>
+</nav>
+
+<!-- ═════════ 1 · HERO ═════════ -->
+<section class="hero" id="hero">
+  <video class="hero-video" id="heroVid" autoplay muted playsinline webkit-playsinline preload="auto" fetchpriority="high">
+    <source src="hero.mp4" type="video/mp4">
+  </video>
+  <div class="hero-edge"></div>
+  <div class="hero-scroll">
+    <span>Scroll</span>
+    <div class="hero-scroll-line"></div>
+  </div>
+</section>
+
+<!-- ═════════ 2 · IDENTITY CAROUSEL ═════════ -->
+<section class="identity" id="identity">
+  <div class="id-split">
+  <div class="id-left">
+  <div class="id-proto-box">
+  <div class="id-proto-frame">
+  <div class="id-persp">
+  <div class="identity-stage">
+    <div class="identity-ring" id="idRing">
+      <div class="id-phone"        data-i="0" data-screen="1" data-title="Your second self" data-feat="An AI version of you that handles the digital noise — so you get real time back." style="transform:rotateY(0deg)   translateZ(var(--ring-r));">
+        <div class="id-face id-front"><iframe class="id-frame" data-src="presence-prototype/index.html?embed=1&screen=1"  title="Prototype · Hero"></iframe><div class="holo"></div></div>
+        <div class="id-face id-back"></div>
+      </div>
+      <div class="id-phone violet" data-i="1" data-screen="2" data-title="One persona per role" data-feat="Separate AI identities for work, family and clients — each still sounds like you." style="transform:rotateY(72deg)  translateZ(var(--ring-r));">
+        <div class="id-face id-front"><iframe class="id-frame" data-src="presence-prototype/index.html?embed=1&screen=2"  title="Prototype · Choose"></iframe><div class="holo"></div></div>
+        <div class="id-face id-back"></div>
+      </div>
+      <div class="id-phone"        data-i="2" data-screen="8" data-title="Delegate any meeting" data-feat="Hand a call to your avatar in one tap — it shows up on time, on-brand, as you." style="transform:rotateY(144deg) translateZ(var(--ring-r));">
+        <div class="id-face id-front"><iframe class="id-frame" data-src="presence-prototype/index.html?embed=1&screen=8"  title="Prototype · Activate"></iframe><div class="holo"></div></div>
+        <div class="id-face id-back"></div>
+      </div>
+      <div class="id-phone"        data-i="3" data-screen="9" data-title="Stay in the loop, live" data-feat="Watch your avatar represent you in real time — whisper a hint or take over anytime." style="transform:rotateY(216deg) translateZ(var(--ring-r));">
+        <div class="id-face id-front"><iframe class="id-frame" data-src="presence-prototype/index.html?embed=1&screen=9"  title="Prototype · Live Session"></iframe><div class="holo"></div></div>
+        <div class="id-face id-back"></div>
+      </div>
+      <div class="id-phone violet" data-i="4" data-screen="14" data-title="You set the limits" data-feat="Dial how much your avatar decides alone — from suggest-only to full autonomy."style="transform:rotateY(288deg) translateZ(var(--ring-r));">
+        <div class="id-face id-front"><iframe class="id-frame" data-src="presence-prototype/index.html?embed=1&screen=14" title="Prototype · Plan"></iframe><div class="holo"></div></div>
+        <div class="id-face id-back"></div>
+      </div>
+    </div>
+  </div>
+  </div>
+  </div>
+  </div>
+  </div>
+
+  <div class="id-right">
+    <div class="id-feature">
+      <div class="id-eyebrow"><span class="dot"></span>Feature <span id="idCur" class="a">01</span> / 05</div>
+      <h2 class="id-feat-ttl" id="featTtlBig">Your second self</h2>
+      <p class="id-feat-txt" id="featTxtBig">An AI version of you that handles the digital noise, so you reclaim real time.</p>
+      <div class="identity-nav">
+        <button class="id-arrow" id="idPrev" aria-label="Previous">←</button>
+        <button class="id-arrow" id="idNext" aria-label="Next">→</button>
+      </div>
+      <div class="id-explore" id="idExplore"><span class="ic">✦</span> Touch it — it's live</div>
+    </div>
+  </div>
+  </div>
+</section>
+
+<!-- ═════════ 3 · DOWNLOAD CTA (holographic, flies in) ═════════ -->
+<section class="cta" id="cta">
+
+  <!-- photos & videos flying around the button -->
+  <div class="cta-media" id="ctaMedia" aria-hidden="true">
+    <div class="cm-item cm-1" data-cap="Sink into a good book while your avatar handles the workday."><div class="cm-inner"><img   class="cm-media" decoding="async" data-src="media/ph1.jpg" alt=""></div></div>
+    <div class="cm-item cm-2" data-cap="Your avatar joins the call and speaks as you."><div class="cm-inner"><video class="cm-media" data-src="media/v1.mp4" muted loop playsinline webkit-playsinline preload="metadata"></video></div></div>
+    <div class="cm-item cm-3" data-cap="Unhurried mornings with your kid — 14 hours reclaimed this week."><div class="cm-inner"><img   class="cm-media" decoding="async" data-src="media/ph2.jpg" alt=""></div></div>
+    <div class="cm-item cm-4" data-cap="Play guitar at home while your avatar runs the meeting."><div class="cm-inner"><video class="cm-media" data-src="media/v2.mp4" muted loop playsinline webkit-playsinline preload="metadata"></video></div></div>
+    <div class="cm-item cm-5" data-cap="Trade the notification storm for real time at home."><div class="cm-inner"><img   class="cm-media" decoding="async" data-src="media/ph3.jpg" alt=""></div></div>
+    <div class="cm-item cm-6" data-cap="Take the morning run — pick which ‘you’ the avatars cover today."><div class="cm-inner"><video class="cm-media" data-src="media/v3.mp4" muted loop playsinline webkit-playsinline preload="metadata"></video></div></div>
+    <div class="cm-item cm-7" data-cap="Read to your kids while your avatar holds the line at work."><div class="cm-inner"><video class="cm-media" data-src="media/v4.mp4" muted loop playsinline webkit-playsinline preload="metadata"></video></div></div>
+  </div>
+
+  <div class="cta-inner" id="ctaInner">
+    <h2 class="cta-title">
+      <span class="ln a">Activate an avatar</span>
+      <span class="ln sk">Let presence work for you</span>
+    </h2>
+
+    <div class="hc-wrap">
+    <div class="hc-rings" aria-hidden="true"></div>
+    <div class="holo-card" id="holoCard">
+      <div class="holo-card-face">
+        <div class="hc-grid"></div>
+        <div class="hc-top">
+          <span class="hc-dot"></span><span>PRESENCE LAYER</span>
+        </div>
+        <div class="hc-orb"><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="hc-label">Two lives.<br>One you.</div>
+        <a class="hc-btn" href="https://t.me/dashkova_m" target="_blank" rel="noopener" id="hcBtn"><span class="hc-btn-txt">Download the app</span></a>
+      </div>
+      <div class="holo-card-shadow"></div>
+    </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════ MODAL ═════════ -->
+<div class="modal" id="modal">
+  <button class="modal-close" id="modalClose" aria-label="Close">✕</button>
+  <div class="modal-shell">
+    <iframe id="modalFrame" src="" title="Presence prototype"></iframe>
+  </div>
+</div>
+
+<!-- feature popup — body-level so the carousel's 3D perspective can't distort it -->
+<div class="feat-pop" id="featPop">
+  <div class="eyebrow"><span class="dot"></span>What you get</div>
+  <div class="ttl" id="featTtl"></div>
+  <div class="txt" id="featTxt"></div>
+</div>
+
+<div class="id-side left"  id="idSideL" role="button" aria-label="Previous screen"></div>
+<div class="id-side right" id="idSideR" role="button" aria-label="Next screen"></div>
+
+<div class="cm-tip" id="cmTip"></div>
+
+<script>
+const PROTO = 'presence-prototype/index.html';
+
+/* fallback for ancient browsers without IntersectionObserver:
+   treat everything as immediately visible so nothing stays hidden */
+if (!('IntersectionObserver' in window)) {
+  window.IntersectionObserver = class {
+    constructor(cb){ this._cb = cb; }
+    observe(el){ this._cb([{ isIntersecting:true, target:el, intersectionRatio:1 }]); }
+    unobserve(){} disconnect(){} takeRecords(){ return []; }
+  };
+}
+
+/* ─── progress bar ─── */
+const progFill = document.getElementById('progFill');
+function updProg(){
+  const max = document.documentElement.scrollHeight - window.innerHeight;
+  progFill.style.width = (max > 0 ? (window.scrollY / max) * 100 : 0).toFixed(1) + '%';
+}
+window.addEventListener('scroll', updProg, { passive:true });
+updProg();
+
+/* ─── show nav brand only after leaving the hero video ─── */
+function updBrand(){ document.body.classList.toggle('scrolled', window.scrollY > window.innerHeight * 0.6); }
+window.addEventListener('scroll', updBrand, { passive:true });
+updBrand();
+
+/* ─── HERO video → auto-scroll 1s before it ends ─── */
+const heroVid = document.getElementById('heroVid');
+const identity = document.getElementById('identity');
+let autoScrolled = false;
+function goToIdentity(){
+  if (autoScrolled) return;
+  autoScrolled = true;
+
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const targetY = identity.getBoundingClientRect().top + window.scrollY;
+  if (reduce){ window.scrollTo(0, targetY); return; }
+
+  const startY = window.scrollY;
+  const dist   = targetY - startY;
+  const dur    = 760;                       // short = punchy "вжух"
+  const t0     = performance.now();
+  // easeInOutExpo — slow grip, violent mid-rush, soft landing
+  const ease = t => t===0?0 : t===1?1 : t<0.5
+      ? Math.pow(2, 20*t - 10) / 2
+      : (2 - Math.pow(2, -20*t + 10)) / 2;
+
+  // disable CSS smooth-scroll during the manual animation (Safari/Chrome safety)
+  const root = document.documentElement;
+  const prevSB = root.style.scrollBehavior;
+  root.style.scrollBehavior = 'auto';
+
+  document.body.classList.add('whooshing'); // hero blurs + lunges away
+  function step(now){
+    const p = Math.min((now - t0) / dur, 1);
+    window.scrollTo(0, startY + dist * ease(p));
+    if (p < 1) requestAnimationFrame(step);
+    else {
+      root.style.scrollBehavior = prevSB;
+      setTimeout(() => document.body.classList.remove('whooshing'), 420);
+    }
+  }
+  requestAnimationFrame(step);
+}
+heroVid.addEventListener('timeupdate', () => {
+  if (!isFinite(heroVid.duration)) return;
+  if (heroVid.currentTime >= heroVid.duration - 1) goToIdentity();
+});
+heroVid.addEventListener('ended', goToIdentity);
+/* iOS/Safari: force muted so inline autoplay is allowed; retry on first gesture */
+heroVid.muted = true;
+heroVid.setAttribute('muted', '');
+function tryPlayHero(){ const p = heroVid.play(); if (p && p.catch) p.catch(() => {}); }
+tryPlayHero();
+['click','touchstart','keydown'].forEach(ev =>
+  document.body.addEventListener(ev, tryPlayHero, { once:true, passive:true }));
+window.addEventListener('scroll', () => {
+  if (window.scrollY > window.innerHeight * 0.6) autoScrolled = true;
+}, { passive:true });
+
+/* ─── IDENTITY 3D RING ─── */
+const ring   = document.getElementById('idRing');
+const phones = Array.from(ring.querySelectorAll('.id-phone'));
+const idCur  = document.getElementById('idCur');
+const idExplore = document.getElementById('idExplore');
+const N = phones.length;
+const ANG = 360 / N;
+let idx = 0;
+/* continuous rotateY per card — the active card always lands on a multiple of 360 (flat),
+   which keeps its <iframe> clickable (iframes don't hit-test inside a rotated 3D context) */
+const cardAngle = phones.map((c, j) => j * ANG);
+
+/* ── feature popup beside the selected screen ── */
+const featPop = document.getElementById('featPop');
+const featTtl = document.getElementById('featTtl');
+const featTxt = document.getElementById('featTxt');
+/* one-line client benefit for every prototype screen (all 18) */
+const FEATURES = {
+  1:{t:'Your second self',      d:'An AI version of you that handles the digital noise, so you reclaim real time.'},
+  2:{t:'One persona per role',  d:'Separate AI identities for work, family and clients — each still sounds like you.'},
+  3:{t:'Teach it your voice',   d:'A few minutes of samples and your avatar learns to speak and write exactly like you.'},
+  4:{t:'You stay in control',   d:'Grant access app-by-app and revoke anything in a tap — nothing happens without your OK.'},
+  5:{t:'Meet your second self', d:'See your trained avatar with its voice-match and tone scores before it goes live.'},
+  6:{t:'Always honest',         d:'Your avatar always discloses it is an AI when asked — trust is never negotiable.'},
+  7:{t:'Everything at a glance',d:'One home for all your identities, active sessions and the time you have reclaimed.'},
+  8:{t:'Delegate a meeting',    d:'Hand a specific call to your avatar in one tap — briefed, on time and on-brand.'},
+  9:{t:'Represented live',      d:'Watch your avatar handle a real call in real time, with live sentiment and coherence.'},
+  10:{t:'Steer it silently',    d:'Send a private nudge mid-call that no one else sees — your avatar weaves it in.'},
+  11:{t:'See the hours saved',  d:'A clear tally of the hours your avatars handed back to you across every identity.'},
+  12:{t:'It learns you',        d:'Your avatar remembers past decisions and your style, getting more you every session.'},
+  13:{t:'Locked down',          d:'All identities encrypted on-device — export, pause or delete any of them anytime.'},
+  14:{t:'You set the limits',   d:'Choose how much your avatar decides on its own — from suggest-only to full autonomy.'},
+  15:{t:'Sound like yourself',  d:'Fine-tune your avatar voice fingerprint until it is indistinguishable from you.'},
+  16:{t:'Set the mood',         d:'Dial how warm, direct or formal your avatar comes across in any context.'},
+  17:{t:'Set hard limits',      d:'Define topics and actions your avatar must never touch — red lines it will not cross.'},
+  18:{t:'Protect your time',    d:'Track recovered hours and recovery, so delegating really gives you your life back.'}
+};
+const featTtlBig = document.getElementById('featTtlBig');
+const featTxtBig = document.getElementById('featTxtBig');
+function setPop(screen){
+  const f = FEATURES[screen]; if (!f) return;
+  if (featTtl) featTtl.textContent = f.t;
+  if (featTxt) featTxt.textContent = f.d;
+  if (featTtlBig) featTtlBig.textContent = f.t;
+  if (featTxtBig) featTxtBig.textContent = f.d;
+}
+function updFeatPop(){
+  const p = phones[idx];
+  if (!p || !featPop) return;
+  setPop(p.dataset.screen);
+  featPop.classList.toggle('violet', p.classList.contains('violet'));
+  placeFeatPop();
+}
+/* follow navigation INSIDE the live prototype: the active card's iframe reports
+   its current screen → the popup shows that feature (so all 18 are covered) */
+window.addEventListener('message', (e) => {
+  const d = e.data; if (!d || d.type !== 'proto-screen') return;
+  const af = phones[idx] && phones[idx].querySelector('iframe');
+  if (af && e.source === af.contentWindow) setPop(d.screen);
+});
+/* vertically centre the popup on the carousel STAGE (the card centres there),
+   not on the section — the nav/caption below push the stage upward */
+/* position:fixed → viewport coords directly. Desktop only; mobile is pinned
+   bottom-centre by CSS (the popup lives at <body> level, outside the 3D stage). */
+function placeFeatPop(){
+  if (!featPop) return;
+  if (window.matchMedia('(max-width:980px)').matches) return;
+  const stage = document.querySelector('.identity-stage');
+  if (!stage) return;
+  const sr = stage.getBoundingClientRect();
+  const scale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--stage-scale')) || 1;
+  featPop.style.left = Math.round(sr.left + sr.width/2 + 180*scale + 26) + 'px';
+  featPop.style.top  = Math.round(sr.top + sr.height/2) + 'px';
+  featPop.style.transform = 'translateY(-50%)';
+}
+
+/* read live each call so the ring depth always matches the CSS --ring-r
+   (which changes per breakpoint / orientation) */
+function ringR(){
+  return parseInt(getComputedStyle(document.documentElement).getPropertyValue('--ring-r'), 10) || 620;
+}
+
+function setRing(i){
+  idx = (i + N) % N;
+  ring.style.transform = `translateZ(${-ringR()}px)`;   /* ring fixed; cards carry the rotation so the front card stays flat */
+  idCur.textContent = String(idx + 1).padStart(2,'0');
+  const R = ringR();
+  phones.forEach((c, j) => {
+    let delta = (j - idx + N) % N; if (delta > N / 2) delta -= N;
+    const d = Math.abs(delta);
+    const active = d === 0;
+    const target = delta * ANG;
+    cardAngle[j] += ((target - cardAngle[j] + 540) % 360) - 180;   /* rotate the short way */
+    c.style.transform = `rotateY(${cardAngle[j]}deg) translateZ(${R}px)`;
+    c.classList.toggle('active', active);
+    /* visible all the way round the orbit — just softer than the front */
+    const op = active ? 1 : d === 1 ? .9 : .72;
+    c.style.opacity = op;
+    c.style.filter  = active ? 'none' : `blur(${d === 1 ? 1.4 : 2.8}px) brightness(.9)`;
+    c.style.zIndex  = active ? 10 : 10 - d;
+  });
+  if (typeof framesLoaded !== 'undefined' && framesLoaded) loadOne(phones[idx]);  // ensure the focused card is loaded
+  updFeatPop();
+  idExplore.classList.add('show');
+}
+document.getElementById('idNext').addEventListener('click', () => { setRing(idx + 1); pauseAuto(); });
+document.getElementById('idPrev').addEventListener('click', () => { setRing(idx - 1); pauseAuto(); });
+/* hover the area left / right of the selected screen to switch (small intent delay
+   so merely passing the cursor through doesn't flip screens); click works too */
+const sideL = document.getElementById('idSideL'), sideR = document.getElementById('idSideR');
+let sideTimer = null;
+function hoverNav(dir){ clearTimeout(sideTimer); sideTimer = setTimeout(() => { setRing(idx + dir); pauseAuto(); }, 180); }
+function cancelNav(){ clearTimeout(sideTimer); }
+sideL.addEventListener('mouseenter', () => hoverNav(-1));
+sideR.addEventListener('mouseenter', () => hoverNav( 1));
+sideL.addEventListener('mouseleave', cancelNav);
+sideR.addEventListener('mouseleave', cancelNav);
+sideL.addEventListener('click', () => { cancelNav(); setRing(idx - 1); pauseAuto(); });
+sideR.addEventListener('click', () => { cancelNav(); setRing(idx + 1); pauseAuto(); });
+
+/* lazy-load iframes once the carousel is on screen.
+   Active card loads first for instant content; the rest stream in during
+   idle time so they don't block the visible one (they share the same cached
+   prototype, so this is cheap). */
+function loadOne(p){ const f = p && p.querySelector('iframe'); if (f && !f.src && f.dataset.src) f.src = f.dataset.src; }
+let framesLoaded = false;
+function loadFrames(){
+  if (framesLoaded) return; framesLoaded = true;
+  loadOne(phones[idx]);                          // visible one first
+  const rest = phones.filter((_, i) => i !== idx);
+  const idle = window.requestIdleCallback || (cb => setTimeout(cb, 300));
+  let i = 0;
+  (function next(){ if (i >= rest.length) return; loadOne(rest[i++]); idle(() => setTimeout(next, 220)); })();
+}
+
+/* auto-rotate while visible; skip ticks while paused */
+let ringTimer = null;
+let pauseUntil = 0;
+function pauseAuto(){ pauseUntil = Date.now() + 9000; }
+function startAuto(){
+  if (ringTimer) return;
+  ringTimer = setInterval(() => { if (Date.now() < pauseUntil) return; setRing(idx + 1); }, 5000);
+}
+function stopAuto(){ clearInterval(ringTimer); ringTimer = null; }
+
+const idObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting){ loadFrames(); startAuto(); } else stopAuto(); });
+}, { threshold:.25 });
+idObs.observe(identity);
+/* show the feature popup while the carousel is centred in view, glued beside the card */
+function syncFeatPop(){
+  if (!featPop) return;
+  const r = identity.getBoundingClientRect();
+  const inView = r.top < innerHeight*0.6 && r.bottom > innerHeight*0.4;
+  featPop.classList.toggle('show', inView);
+  document.querySelectorAll('.id-side').forEach(z => z.classList.toggle('show', inView));
+  if (inView) placeFeatPop();
+}
+window.addEventListener('scroll', syncFeatPop, { passive:true });
+window.addEventListener('resize', syncFeatPop, { passive:true });
+syncFeatPop();
+
+const stage = document.querySelector('.identity-stage');
+stage.addEventListener('mouseenter', () => { pauseUntil = Date.now() + 999999; });
+stage.addEventListener('mouseleave', () => { pauseUntil = Date.now() + 3000; });
+
+phones.forEach(p => {
+  p.addEventListener('click', () => {
+    if (!p.classList.contains('active')){ setRing(+p.dataset.i); pauseAuto(); }
+  });
+});
+
+/* ── touch swipe to spin the carousel (mobile / tablet) ── */
+let touchX = null, touchY = null;
+stage.addEventListener('touchstart', (e) => {
+  touchX = e.touches[0].clientX; touchY = e.touches[0].clientY;
+  pauseUntil = Date.now() + 999999;
+}, { passive:true });
+stage.addEventListener('touchend', (e) => {
+  if (touchX === null) return;
+  const dx = e.changedTouches[0].clientX - touchX;
+  const dy = e.changedTouches[0].clientY - touchY;
+  if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy)){
+    setRing(idx + (dx < 0 ? 1 : -1));   // swipe left → next
+  }
+  touchX = touchY = null;
+  pauseUntil = Date.now() + 6000;
+}, { passive:true });
+
+/* recompute ring depth on resize / orientation change */
+let rzTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(rzTimer);
+  rzTimer = setTimeout(() => setRing(idx), 150);
+}, { passive:true });
+
+setRing(0);
+
+/* ─── modal / dive-in ─── */
+const modal = document.getElementById('modal');
+const modalFrame = document.getElementById('modalFrame');
+const modalClose = document.getElementById('modalClose');
+function openProto(screen){
+  modalFrame.src = `${PROTO}?embed=1&screen=${screen || 1}`;
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(){
+  modal.classList.remove('open');
+  setTimeout(() => { modalFrame.src = ''; }, 400);
+  document.body.style.overflow = '';
+}
+modalClose.addEventListener('click', closeModal);
+modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+/* ─── CTA holographic card flies in ─── */
+const cta = document.getElementById('cta');
+const ctaObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) cta.classList.add('in'); });
+}, { threshold:.3 });
+ctaObs.observe(cta);
+
+/* ─── photos/videos flying around the CTA button · lazy load + hover play + parallax ─── */
+(() => {
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const layer = document.getElementById('ctaMedia');
+  if (!layer) return;
+  const items = [...layer.querySelectorAll('.cm-item')];
+
+  /* one selling tooltip, placed beside whichever tile is active (right, or flipped left) */
+  const cmTip = document.getElementById('cmTip');
+  const ctaTitle = document.querySelector('.cta-title');
+  let tipItem = null, tipRAF = 0, tipUntil = 0;
+  function tipSide(r){   // left card → LEFT, right card → RIGHT (always)
+    return (r.left + r.width/2) < innerWidth/2 ? 'left' : 'right';
+  }
+  function placeTip(){
+    if (!tipItem || !cmTip) return;
+    const inner = tipItem.querySelector('.cm-inner'); if (!inner) return;
+    const r = inner.getBoundingClientRect();
+    const W = cmTip.offsetWidth || 230, H = cmTip.offsetHeight || 48, gap = 16;
+    let left = (tipSide(r, W) === 'left') ? (r.left - gap - W) : (r.right + gap);
+    left = Math.max(10, Math.min(left, innerWidth - W - 10));
+    let top = r.top + r.height/2 - H/2;                        // vertically centred on the image (same level as the tile)
+    top = Math.max(10, Math.min(top, innerHeight - H - 10));
+    cmTip.style.left = Math.round(left) + 'px';
+    cmTip.style.top  = Math.round(top)  + 'px';
+  }
+  function showTip(item){
+    if (!cmTip || !item || !item.dataset.cap) return;
+    tipItem = item; cmTip.textContent = item.dataset.cap;
+    cmTip.classList.add('show');                               // render so width is measurable
+    const inner = item.querySelector('.cm-inner');
+    const r = inner ? inner.getBoundingClientRect() : {left:0,width:0};
+    const side = tipSide(r, cmTip.offsetWidth || 230);
+    cmTip.classList.remove('show','to-left','to-right');
+    void cmTip.offsetWidth;                                    // restart the directional slide
+    cmTip.classList.add('show', side === 'left' ? 'to-left' : 'to-right');
+    placeTip();
+    cancelAnimationFrame(tipRAF); tipUntil = performance.now() + 850; // keep aligned during the .75s grow
+    const loop = () => { placeTip(); if (performance.now() < tipUntil) tipRAF = requestAnimationFrame(loop); };
+    tipRAF = requestAnimationFrame(loop);
+  }
+  function hideTip(){ tipItem = null; cancelAnimationFrame(tipRAF); if (cmTip) cmTip.classList.remove('show','to-left','to-right'); }
+
+  const setAR = (item, w, h) => { if (w && h) item.style.setProperty('--ar', (w / h).toFixed(4)); };
+
+  let loaded = false;
+  function loadMedia(){
+    if (loaded) return; loaded = true;
+    items.forEach(item => {
+      const m = item.querySelector('.cm-media');
+      if (!m || !m.dataset.src) return;
+      const ev = (m.tagName === 'IMG') ? 'load' : 'loadedmetadata';
+      m.addEventListener(ev, () => setAR(item, m.naturalWidth || m.videoWidth, m.naturalHeight || m.videoHeight), { once:true });
+      m.src = m.dataset.src;
+    });
+  }
+  const videos = items.map(it => { const m = it.querySelector('.cm-media'); return (m && m.tagName === 'VIDEO') ? m : null; });
+  const playV  = (v) => { if (v){ const p = v.play(); if (p && p.catch) p.catch(() => {}); } };
+  const stopV  = (v) => { if (v){ v.pause(); try { v.currentTime = 0; } catch(_){} } };
+
+  /* ── auto-demo: cycle focus through items so users see they're interactive ── */
+  let visible = false, userActive = false, curr = -1, timer = null, resumeT = null;
+
+  function setAuto(i){
+    items.forEach((it, k) => { if (k !== i){ it.classList.remove('is-auto'); stopV(videos[k]); } });
+    items[i].classList.add('is-auto');
+    playV(videos[i]);
+    curr = i;
+    showTip(items[i]);
+  }
+  function tick(){ if (!visible || userActive) return; setAuto((curr + 1) % items.length); }
+  function startAuto(){
+    if (reduce || timer) return;
+    let first = videos.findIndex(v => v); if (first < 0) first = 0;   // begin on the first VIDEO
+    if (!userActive){ curr = first; setAuto(first); }
+    timer = setInterval(tick, 3000);
+  }
+  function stopAuto(){ clearInterval(timer); timer = null; items.forEach((it,k)=>{ it.classList.remove('is-auto'); stopV(videos[k]); }); hideTip(); }
+
+  // load + drive the auto-demo when the CTA enters / leaves view
+  const mObs = new IntersectionObserver((es) => {
+    es.forEach(e => {
+      if (e.isIntersecting){ loadMedia(); visible = true; startAuto(); }
+      else { visible = false; stopAuto(); }
+    });
+  }, { threshold:.2 });
+  mObs.observe(cta);
+
+  // manual hover takes over from the auto-demo; tap toggles on touch
+  items.forEach((item, idx) => {
+    const m = videos[idx];
+    item.addEventListener('pointerenter', () => {
+      userActive = true; clearTimeout(resumeT);
+      items.forEach((o, k) => { if (o !== item){ o.classList.remove('is-auto'); stopV(videos[k]); } });
+      item.classList.remove('is-auto');   // :hover supplies the frontal pose
+      playV(m);
+      showTip(item);
+    });
+    item.addEventListener('pointerleave', () => {
+      stopV(m);
+      hideTip();
+      clearTimeout(resumeT);
+      resumeT = setTimeout(() => { userActive = false; tick(); }, 3500);  // resume demo after a pause
+    });
+    item.addEventListener('click', () => { if (m){ m.paused ? playV(m) : m.pause(); } });
+  });
+
+  // gentle layer parallax, frozen while hovering an item so it can't slide away
+  if (!reduce){
+    cta.addEventListener('pointermove', (e) => {
+      if (e.target.closest('.cm-item')) return;
+      const r = cta.getBoundingClientRect();
+      const nx = ((e.clientX - r.left) / r.width  - 0.5) * 2;
+      const ny = ((e.clientY - r.top)  / r.height - 0.5) * 2;
+      layer.style.transform =
+        `rotateY(${(nx*4).toFixed(2)}deg) rotateX(${(-ny*3).toFixed(2)}deg) ` +
+        `translate3d(${(nx*14).toFixed(1)}px, ${(ny*10).toFixed(1)}px, 0)`;
+    });
+    cta.addEventListener('pointerleave', () => { layer.style.transform = ''; });
+  }
+})();
+</script>
+
+</body>
+</html>
