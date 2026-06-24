@@ -381,12 +381,18 @@ body.whooshing .identity-stage{animation:whoosh-in .9s var(--ease-out);}
   @media (max-height:740px){ :root{ --proto-scale:.52; } }
 }
 @media (max-width:980px){
-  .id-split{ grid-template-columns:1fr; gap:14px; justify-items:center; }
-  .id-right{ text-align:center; }
-  .id-feature{ display:flex; flex-direction:column; align-items:center; }
-  .id-eyebrow{ justify-content:center; }
-  .id-right .identity-nav{ justify-content:center; }
-  .id-feat-txt{ margin-left:auto; margin-right:auto; }
+  /* second screen — mobile stack order: eyebrow → prototype → arrows → title + (smaller) description.
+     display:contents unwraps the right column so its children become flex items of .id-split,
+     which lets us interleave them with the prototype via `order`. */
+  .id-split{ display:flex; flex-direction:column; align-items:center; gap:14px; }
+  .id-right{ display:contents; }
+  .id-feature{ display:contents; }
+  .id-eyebrow{ order:1; justify-content:center; margin:0; }
+  .id-left{ order:2; padding:6px 0; }
+  .id-right .identity-nav{ order:3; justify-content:center; margin:2px 0 0; }
+  .id-feat-ttl{ order:4; text-align:center; min-height:0; margin:6px 0 0; font-size:22px; }
+  .id-feat-txt{ order:5; text-align:center; margin:6px auto 0; max-width:32ch; min-height:0; font-size:13px; }
+  .id-explore{ order:6; }
   :root{ --proto-scale:min(.55, calc((100vw - 40px) / 360px)); }
 }
 
@@ -470,6 +476,37 @@ body.whooshing .identity-stage{animation:whoosh-in .9s var(--ease-out);}
   .cm-7{left:5%;}
 }
 @media (max-width:1024px){ .cta-media{display:none;} }
+/* ── MOBILE: the floating media becomes a sideways-scroll rail, caption under each card ── */
+@media (max-width:980px){
+  .cta{ flex-direction:column; justify-content:flex-start; gap:26px; }
+  .cta-media{
+    display:flex !important; position:static; inset:auto; order:0;
+    width:100%; gap:14px; padding:2px 16px 14px; margin:0;
+    overflow-x:auto; overflow-y:hidden; transform:none !important; perspective:none;
+    scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; pointer-events:auto;
+  }
+  .cta-media::-webkit-scrollbar{ height:0; }
+  .cm-item{
+    position:static; left:auto; top:auto; right:auto;
+    flex:0 0 76%; max-width:300px; width:auto;
+    transform:none !important; opacity:1 !important;
+    scroll-snap-align:center; pointer-events:auto;
+    display:flex; flex-direction:column; gap:10px;
+  }
+  .cm-inner{
+    width:100%; filter:none !important; opacity:1 !important;
+    animation:none !important; transform:none !important;
+    border-radius:14px; box-shadow:0 16px 40px rgba(0,0,0,.5);
+  }
+  .cm-media{ height:auto; aspect-ratio:1.6; }
+  .cm-item::after{
+    content:attr(data-cap);
+    font-family:var(--font-mono); font-size:12px; line-height:1.45;
+    color:var(--w70, #b9c9c4); text-align:left; padding:0 2px;
+  }
+  .cm-tip{ display:none !important; }
+  .cta-inner{ order:1; }
+}
 
 /* ═════════════ 3 · DOWNLOAD CTA · holographic fly-in ═════════════ */
 .cta{
