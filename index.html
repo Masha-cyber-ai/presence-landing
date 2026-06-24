@@ -81,7 +81,7 @@ body.scrolled .nav-brand{opacity:1; pointer-events:auto;}
 
 /* ═════════════ 1 · HERO (video only) ═════════════ */
 .hero{position:relative; width:100%; height:100vh; height:100dvh; background:#000; overflow:hidden;}
-.hero-video{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transition:filter .55s var(--ease-out), transform .8s var(--ease-out);}
+.hero-video{position:absolute; inset:0; width:100%; height:100%; object-fit:contain; background:#000; transition:filter .55s var(--ease-out), transform .8s var(--ease-out);}
 
 /* ── "вжух" auto-scroll flourish ── */
 body.whooshing .hero-video{filter:blur(9px) brightness(.55) saturate(1.2); transform:scale(1.14);}
@@ -322,12 +322,12 @@ body.whooshing .identity-stage{animation:whoosh-in .9s var(--ease-out);}
 .id-counter .a{color:var(--accent);}
 
 /* ════════ TWO-COLUMN IDENTITY: prototype (left) · feature text (right) ════════ */
-:root{ --proto-scale:.48; }
+:root{ --proto-scale:.68; }
 .id-split{
   width:100%; max-width:1180px; margin:0 auto;
-  display:grid; grid-template-columns:1fr 1fr; align-items:center; gap:48px;
+  display:grid; grid-template-columns:70% 30%; align-items:center; gap:40px;
 }
-.id-left{ display:flex; justify-content:center; align-items:center; min-width:0; overflow:hidden; }
+.id-left{ display:flex; justify-content:center; align-items:center; min-width:0; overflow:visible; padding:30px 0; }
 .id-right{ min-width:0; }
 /* layout box reserves the SCALED footprint of the carousel (≤3/4 of the half) */
 .id-proto-box{
@@ -350,7 +350,7 @@ body.whooshing .identity-stage{animation:whoosh-in .9s var(--ease-out);}
   transform:none;
 }
 
-.id-feature{ max-width:540px; }
+.id-feature{ max-width:380px; }
 .id-eyebrow{
   display:inline-flex; align-items:center; gap:9px;
   font-family:var(--font-mono); font-size:11px; letter-spacing:.22em; text-transform:uppercase;
@@ -360,13 +360,13 @@ body.whooshing .identity-stage{animation:whoosh-in .9s var(--ease-out);}
 .id-eyebrow .a{ color:var(--accent); }
 .id-feat-ttl{
   font-family:var(--font-display); font-weight:400;
-  font-size:clamp(30px, 3.4vw, 48px); line-height:1.05; letter-spacing:.01em; color:#fff;
+  font-size:clamp(24px, 2.4vw, 36px); line-height:1.06; letter-spacing:.01em; color:#fff;
   min-height:2.1em;            /* reserve 2 lines → text below never jumps when the title length changes */
   transition:opacity .35s var(--ease);
 }
 .id-feat-txt{
-  font-family:var(--font-mono); font-size:clamp(15px, 1.5vw, 21px); line-height:1.55;
-  color:var(--w70); margin-top:24px; max-width:480px;
+  font-family:var(--font-mono); font-size:clamp(13px, 1.1vw, 16px); line-height:1.55;
+  color:var(--w70); margin-top:20px; max-width:340px;
   min-height:4.65em;           /* reserve 3 lines → the nav below stays put across screens */
   transition:opacity .35s var(--ease);
 }
@@ -377,8 +377,8 @@ body.whooshing .identity-stage{animation:whoosh-in .9s var(--ease-out);}
 .id-side{ display:none !important; }
 
 @media (min-width:1025px){
-  @media (max-height:860px){ :root{ --proto-scale:.41; } }
-  @media (max-height:740px){ :root{ --proto-scale:.36; } }
+  @media (max-height:860px){ :root{ --proto-scale:.60; } }
+  @media (max-height:740px){ :root{ --proto-scale:.52; } }
 }
 @media (max-width:980px){
   .id-split{ grid-template-columns:1fr; gap:14px; justify-items:center; }
@@ -387,7 +387,7 @@ body.whooshing .identity-stage{animation:whoosh-in .9s var(--ease-out);}
   .id-eyebrow{ justify-content:center; }
   .id-right .identity-nav{ justify-content:center; }
   .id-feat-txt{ margin-left:auto; margin-right:auto; }
-  :root{ --proto-scale:min(.55, calc((100vw - 40px) / 360)); }
+  :root{ --proto-scale:min(.55, calc((100vw - 40px) / 360px)); }
 }
 
 /* ═════════════ PHOTOS / VIDEOS FLYING AROUND THE CTA BUTTON ═════════════ */
