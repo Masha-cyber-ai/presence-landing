@@ -394,6 +394,14 @@ body.whooshing .identity-stage{animation:whoosh-in .9s var(--ease-out);}
   .id-feat-txt{ order:5; text-align:center; margin:6px auto 0; max-width:32ch; min-height:0; font-size:13px; }
   .id-explore{ order:6; }
   :root{ --proto-scale:min(.55, calc((100vw - 40px) / 360px)); }
+
+  /* tap the area to the left / right of the phone to switch screens.
+     these zones already exist (#idSideL / #idSideR → setRing); just un-hide
+     them on mobile. touch-action:pan-y keeps vertical page scroll working. */
+  .id-side{ display:block !important; width:28vw; height:54vh; top:46%; touch-action:pan-y; }
+  /* make the prototype itself non-interactive on touch so a tap on the screen
+     navigates instead of being swallowed by the iframe */
+  .id-phone.active .id-front .id-frame{ pointer-events:none; }
 }
 
 /* ═════════════ PHOTOS / VIDEOS FLYING AROUND THE CTA BUTTON ═════════════ */
